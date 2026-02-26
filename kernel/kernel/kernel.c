@@ -6,6 +6,9 @@
 #include <kernel/idt.h>
 #include <kernel/pic.h>
 #include <kernel/multiboot.h>
+#include <kernel/pmm.h>
+
+extern uint32_t _kernel_end;
 
 void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 	gdt_initialize();
@@ -26,22 +29,35 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 		return;
 	}
 
-	printf("Memory Map:\n");
+	// calculate total RAM size from multiboot
+	uint32_t mem_size = (mboot_ptr->mem_upper + 1024) * 1024;
 
+	pmm_initialize(mem_size, (uint32_t)&_kernel_end);
+
+	// parse multiboot to unlock valid RAM
 	multiboot_memory_map_t* mmap = (multiboot_memory_map_t*)mboot_ptr->mmap_addr;
-	while((uint32_t)mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
-		// only print available RAM
+	while ((uint32_t)mmap < mboot_ptr->mmap_addr + mboot_ptr->mmap_length) {
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
-			printf("  Base: 0x%x | Length: 0x%x (Free RAM)\n", 
-				mmap->addr_low, mmap->len_low);
-		} else {
-			printf("  Base: 0x%x | Length: 0x%x (Reserved)\n", 
-				mmap->addr_low, mmap->len_low);
+			pmm_init_region(mmap->addr_low, mmap->len_low);
 		}
-
-		// advance to next entry
 		mmap = (multiboot_memory_map_t*) ((unsigned int)mmap + mmap->size + sizeof(unsigned int));
 	}
+
+	// lock the kernel
+	uint32_t bitmap_size = (mem_size / 4096) / 8;
+	pmm_deinit_region(0x100000, ((uint32_t)&_kernel_end - 0x100000) + bitmap_size);
+
+	printf("PMM initialized.\n");
+
+
+	uint32_t a = pmm_alloc_block();
+	printf("Allocated page at: 0x%x\n", a);
+	uint32_t b = pmm_alloc_block();
+	printf("Allocated page at: 0x%x\n", b);
+
+	pmm_free_block(a);
+	uint32_t c = pmm_alloc_block();
+	printf("Allocated page at: 0x%x (must be same as first one)\n", c);
 
 	asm volatile("sti");
 
