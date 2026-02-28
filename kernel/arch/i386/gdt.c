@@ -1,8 +1,9 @@
 #include <stdint.h>
 
 #include <kernel/gdt.h>
+#include <kernel/tss.h>
 
-struct gdt_entry gdt[3];
+struct gdt_entry gdt[6];
 struct gdt_ptr gp;
 
 extern void gdt_flush(uint32_t);
@@ -20,7 +21,7 @@ void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_
 }
 
 void gdt_initialize(void) {
-	gp.limit = (sizeof(struct gdt_entry) * 3) - 1;
+	gp.limit = (sizeof(struct gdt_entry) * 6) - 1;
 	gp.base = (uint32_t)&gdt;
 
 	// rule 0: null descriptor (required by intel)
@@ -32,7 +33,14 @@ void gdt_initialize(void) {
 	// rule 2: kernel data (base: 0, limit: 4GB, readable/writable)
 	gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
 
+	// rule 3: user code (base: 0, limit: 4GB, type: 0xFA)
+	gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);
+
+	// rule 4: user data (base: 0, limit: 4GB, type: 0xF2)
+	gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
+
 	// hand the pointer to the cpu via assembly
 	gdt_flush((uint32_t)&gp);
+	tss_install(5, 0x10, 0);
 }
 
