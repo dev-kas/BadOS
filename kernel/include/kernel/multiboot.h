@@ -54,4 +54,13 @@ struct multiboot_mmap_entry {
 
 typedef struct multiboot_mmap_entry multiboot_memory_map_t;
 
+struct multiboot_mod_list {
+	uint32_t mod_start;
+	uint32_t mod_end;
+	uint32_t cmdline;
+	uint32_t pad;
+};
+
+typedef struct multiboot_mod_list multiboot_module_t;
+
 #endif

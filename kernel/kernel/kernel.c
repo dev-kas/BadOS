@@ -9,6 +9,7 @@
 #include <kernel/pmm.h>
 #include <kernel/vmm.h>
 #include <kernel/kheap.h>
+#include <kernel/fs.h>
 
 #include <string.h>
 
@@ -31,6 +32,21 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 	if (!(mboot_ptr->flags & MULTIBOOT_FLAG_MMAP)) {
 		printf("Error: No memory map provided by GRUB!\n");
 		return;
+	}
+
+	// check if grub loaded the module
+	if (mboot_ptr->mods_count > 0) {
+		uint32_t mod_addr = mboot_ptr->mods_addr;
+		multiboot_module_t* module = (multiboot_module_t*)mod_addr;
+
+		uint32_t start = module->mod_start;
+		uint32_t end = module->mod_end;
+		uint32_t len = end - start;
+
+		printf("Module found at 0x%x (size = %d bytes)\n", start, len);
+
+		fs_init(start);
+		fs_cat("message.txt");
 	}
 
 	// calculate total RAM size from multiboot
@@ -72,7 +88,7 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 
 	char* str = (char*)kmalloc(15);
 	strcpy(str, "kmalloc test");
-	printf("Heap test: %s (at 0x%s)", str, str); // should be 0xD00000XX;
+	printf("Heap test: %s (at 0x%x)", str, str); // should be 0xD00000XX;
 	kfree(str);
 
 	while (1) { asm volatile("hlt"); }
