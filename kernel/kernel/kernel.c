@@ -8,6 +8,9 @@
 #include <kernel/multiboot.h>
 #include <kernel/pmm.h>
 #include <kernel/vmm.h>
+#include <kernel/kheap.h>
+
+#include <string.h>
 
 extern uint32_t _kernel_end;
 
@@ -52,9 +55,25 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 
 	vmm_initialize();
 
+	// for 1MB heap (256 pages)
+	uint32_t heap_start = 0xD0000000;
+	uint32_t heap_end = heap_start + (1024 * 1024);
+
+	for (uint32_t i = heap_start; i < heap_end; i += 4096) {
+		uint32_t phys = pmm_alloc_block();
+		vmm_map_page(phys, i);
+	}
+
+	kheap_initialize((void*)heap_start, 256 * 4096);
+
 	asm volatile("sti");
 
 	printf("Hello, Meat world!\n");
+
+	char* str = (char*)kmalloc(15);
+	strcpy(str, "kmalloc test");
+	printf("Heap test: %s (at 0x%s)", str, str); // should be 0xD00000XX;
+	kfree(str);
 
 	while (1) { asm volatile("hlt"); }
 }
