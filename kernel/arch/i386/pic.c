@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "io.h"
+#include <arch/i386/io.h>
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA    0x21
@@ -38,6 +38,6 @@ void pic_remap(void) {
 	io_wait();
 
 	// restore saved masks
-	outb(PIC1_DATA, 0xFD);
+	outb(PIC1_DATA, 0xFC);
 	outb(PIC2_DATA, 0xFF);
 }

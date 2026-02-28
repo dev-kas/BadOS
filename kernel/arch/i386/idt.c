@@ -3,8 +3,9 @@
 #include <stdio.h>
 
 #include <kernel/idt.h>
+#include <kernel/tty.h>
 
-#include "io.h"
+#include <arch/i386/io.h>
 
 struct idt_entry idt[256];
 struct idt_ptr idtp;
@@ -27,6 +28,9 @@ void isr0_handler(void) {
 	printf("EXCEPTION: DIVIDE BY ZERO\n");
 	asm volatile ("cli; hlt");
 }
+
+// IRQ0 - timer
+extern void isr32(void);
 
 // IRQ1 - keyboard
 extern void isr33(void);
@@ -73,7 +77,8 @@ void isr33_handler(void) {
 	}
         
         if (c != 0) {
-            printf("%c", c);
+		keyboard_push(c);
+		terminal_putchar(c);
         }
     }
 
@@ -89,6 +94,7 @@ void idt_initialize(void) {
 	}
 
 	idt_set_gate( 0, (uint32_t)isr0,  0x08, 0x8E); // divide by zero
+	idt_set_gate(32, (uint32_t)isr32, 0x08, 0x8E); // IRQ0 - timer
 	idt_set_gate(33, (uint32_t)isr33, 0x08, 0x8E); // IRQ1 - keyboard
 
 	idt_flush((uint32_t)&idtp);

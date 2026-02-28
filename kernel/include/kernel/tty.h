@@ -8,4 +8,7 @@ void terminal_putchar(char c); // but a character and inc cursor
 void terminal_write(const char* data, size_t size); // write string by looping with putchar
 void terminal_writestring(const char* data); // abstract for write, get len automatically
 
+void keyboard_push(char c);
+char keyboard_getchar();
+
 #endif

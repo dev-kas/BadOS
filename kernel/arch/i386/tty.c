@@ -7,6 +7,8 @@
 
 #include "vga.h"
 
+#define KEYBOARD_BUFFER_SIZE 256
+
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
 static uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
@@ -15,6 +17,10 @@ static size_t terminal_row;
 static size_t terminal_column;
 static uint8_t terminal_color;
 static uint16_t* terminal_buffer;
+
+char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
+uint8_t write_ptr = 0;
+uint8_t read_ptr = 0;
 
 void terminal_initialize(void) {
 	terminal_row = 0;
@@ -104,4 +110,27 @@ void terminal_write(const char* data, size_t size) {
 
 void terminal_writestring(const char* data) {
 	terminal_write(data, strlen(data));
+}
+
+void keyboard_push(char c) {
+	uint8_t next_write = (write_ptr + 1) % KEYBOARD_BUFFER_SIZE;
+	
+	// if buffer is full, drop the key
+	if (next_write == read_ptr) {
+		return;
+	}
+
+	keyboard_buffer[write_ptr] = c;
+	write_ptr = next_write;
+}
+
+char keyboard_getchar() {
+	// wait until there is data (blocking io)
+	while (read_ptr == write_ptr) {
+		asm volatile("hlt"); // wait for interrupt
+	}
+
+	char c = keyboard_buffer[read_ptr];
+	read_ptr = (read_ptr + 1) % KEYBOARD_BUFFER_SIZE;
+	return c;
 }

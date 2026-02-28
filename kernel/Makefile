@@ -33,6 +33,7 @@ kernel/kernel.o \
 kernel/kheap.o \
 kernel/pmm.o \
 kernel/fs.o \
+kernel/process.o \
 
 OBJS=\
 $(ARCHDIR)/crti.o \
