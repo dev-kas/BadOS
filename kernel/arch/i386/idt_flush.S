@@ -46,3 +46,18 @@ isr33:
 	sti
 	iret
 
+.global isr128
+.extern syscall_handler
+isr128:
+	cli
+	pushl $0
+	pushl $128
+	pusha
+	push %esp
+	call syscall_handler
+	add $4, %esp
+	popa
+	add $8, %esp
+	sti
+	iret
+

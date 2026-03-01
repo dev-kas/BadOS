@@ -17,6 +17,25 @@
 extern uint32_t _kernel_end;
 extern void switch_to_user_mode();
 
+static inline void syscall(int num, int p1, int p2, int p3) {
+	// int ret;
+	asm volatile(
+		"int $0x80"
+		: // "=a"(ret) // output: put return value into ret
+		: "a"(num), "b"(p1), "c"(p2), "d"(p3) // inputs: eax, ebx, ecx, edx
+		: "memory"
+	);
+	// return ret;
+}
+
+void user_print(char* str) {
+	syscall(1, (int)str, 0, 0); // eax = 1, ebx = string
+}
+
+void user_exit() {
+	syscall(2, 0, 0, 0); // eax = 2
+}
+
 void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 	gdt_initialize();
 	idt_initialize();
@@ -89,16 +108,13 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 
 	printf("Kernel: Entering User Mode...\n");
 	switch_to_user_mode();
+	printf("In usermode now. attempting user_print\n");
 
-	// we are now in ring 3
-	printf("User: Hello from Ring 3!\n");
-
-	// test: try to disable interrupts (privileged instruction)
-	printf("User: Attempting to run 'cli'...\n");
-
-	asm volatile("cli"); 
-
-	printf("User: If you see this, security failed.\n");
-
-	while (1) {};
+	user_print("Syscall: Hello from ring 3 via int 0x80!\n");
+	printf("attempting another user_print\n");
+	user_print("Syscall: this is completely safe...\n");
+	printf("attempting user_exit\n");
+	user_exit();
+	printf("attempting another user_print\n");
+	user_print("Syscall: you will never see this\n");
 }

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 struct registers {
-	uint32_t edi, esi, ebp, ebx, edx, ecx, eax; // pushed by pusha
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // pushed by pusha
 	uint32_t int_no, err_code; // interrupt number and error code
 	uint32_t eip, cs, eflags, useresp, ss; // pushed by processor automatically
 };

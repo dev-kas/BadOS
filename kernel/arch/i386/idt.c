@@ -94,6 +94,9 @@ void isr33_handler(void) {
     outb(0x20, 0x20); 
 }
 
+// syscall
+extern void isr128(void);
+
 void idt_initialize(void) {
 	idtp.limit = (sizeof(struct idt_entry) * 256) - 1;
 	idtp.base = (uint32_t)&idt;
@@ -102,10 +105,11 @@ void idt_initialize(void) {
 		idt_set_gate(i, 0, 0, 0);
 	}
 
-	idt_set_gate( 0, (uint32_t)isr0,  0x08, 0x8E); // divide by zero
-	idt_set_gate(13, (uint32_t)isr13, 0x08, 0x8E); // GPF (general protection fault)
-	idt_set_gate(32, (uint32_t)isr32, 0x08, 0x8E); // IRQ0 - timer
-	idt_set_gate(33, (uint32_t)isr33, 0x08, 0x8E); // IRQ1 - keyboard
+	idt_set_gate(  0, (uint32_t)  isr0, 0x08, 0x8E); // divide by zero
+	idt_set_gate( 13, (uint32_t) isr13, 0x08, 0x8E); // GPF (general protection fault)
+	idt_set_gate( 32, (uint32_t) isr32, 0x08, 0x8E); // IRQ0 - timer
+	idt_set_gate( 33, (uint32_t) isr33, 0x08, 0x8E); // IRQ1 - keyboard
+	idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE); // syscall
 
 	idt_flush((uint32_t)&idtp);
 }
