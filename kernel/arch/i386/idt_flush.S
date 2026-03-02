@@ -23,6 +23,18 @@ isr13:
 	popa
 	iret
 
+.global isr14
+.extern isr14_handler
+isr14:
+	cli
+	pushl $14
+	pusha
+	call isr14_handler
+	popa
+	add $8, %esp # clean up error code and int number
+	sti
+	iret
+
 .global isr32
 .extern irq0_handler # c scheduler
 isr32:

@@ -38,6 +38,18 @@ void isr13_handler(void) {
 	while(1) { asm volatile("cli; hlt"); }
 }
 
+// #PF (page fault)
+extern void isr14(void);
+void isr14_handler(void) {
+	uint32_t faulting_address;
+	asm volatile("mov %%cr2, %0" : "=r"(faulting_address));
+
+	printf("\n[KERNEL PANIC] PAGE FAULT!\n");
+	printf("Tried to access unmapped memory at: 0x%x\n", faulting_address);
+
+	while(1) { asm volatile("cli; hlt"); }
+}
+
 // IRQ0 - timer
 extern void isr32(void);
 
@@ -107,6 +119,7 @@ void idt_initialize(void) {
 
 	idt_set_gate(  0, (uint32_t)  isr0, 0x08, 0x8E); // divide by zero
 	idt_set_gate( 13, (uint32_t) isr13, 0x08, 0x8E); // GPF (general protection fault)
+	idt_set_gate( 14, (uint32_t) isr14, 0x08, 0x8E); // #PF (page fault)
 	idt_set_gate( 32, (uint32_t) isr32, 0x08, 0x8E); // IRQ0 - timer
 	idt_set_gate( 33, (uint32_t) isr33, 0x08, 0x8E); // IRQ1 - keyboard
 	idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE); // syscall

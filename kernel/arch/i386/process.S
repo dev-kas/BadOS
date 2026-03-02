@@ -2,6 +2,9 @@
 switch_to_user_mode:
 	cli
 
+	# get the entry_point arg from c stack
+	mov 4(%esp), %ebx
+
 	# gdt entry 4 is 0x20, so 0x20 | 3 (ring 3) = 0x23
 	mov $0x23, %ax
 	mov %ax, %ds
@@ -9,10 +12,9 @@ switch_to_user_mode:
 	mov %ax, %fs
 	mov %ax, %gs
 
-	mov %esp, %eax # save current esp into eax
-
+	# construct iret frame
 	pushl $0x23 # ss (user data)
-	pushl %eax # esp (user stack)
+	pushl $0x3FFFF0 # esp (user stack)
 	pushf # eflags
 
 	popl %eax
@@ -20,9 +22,6 @@ switch_to_user_mode:
 	pushl %eax
 
 	pushl $0x1B # push cs (user code segment)
-	pushl $1f # eip (return addr)
+	pushl %ebx # eip
 	iret # jump to user mode
 
-1:
-	# we are now in ring 3 aka user mode!!
-	ret

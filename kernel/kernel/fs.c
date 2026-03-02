@@ -74,3 +74,18 @@ void fs_cat (char* target_filename) {
 	}
 	printf("File not found: %s\n", target_filename);
 }
+
+void* fs_get_file(char* filename, uint32_t* out_size) {
+	struct tar_header* header = (struct tar_header*)fs_start_addr;
+
+	while (header->filename[0] != 0) {
+		unsigned int size = get_size(header->size);
+		if (strcmp(header->filename, filename) == 0) {
+			if (out_size) *out_size = size;
+			return (void*)((uint32_t)header + 512); // ptr to file contents
+		}
+		uint32_t next_offset = 512 + (((size + 511) / 512) * 512);
+		header = (struct tar_header*)((uint32_t)header + next_offset);
+	}
+	return NULL;
+}

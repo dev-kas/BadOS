@@ -35,6 +35,7 @@ kernel/pmm.o \
 kernel/fs.o \
 kernel/process.o \
 kernel/syscall.o \
+kernel/kex.o \
 
 OBJS=\
 $(ARCHDIR)/crti.o \

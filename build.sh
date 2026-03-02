@@ -6,4 +6,5 @@ for PROJECT in $PROJECTS; do
 	(cd $PROJECT && DESTDIR="$SYSROOT" $MAKE install)
 done
 
-cp ./ramdisk.tar $SYSROOT/ramdisk.tar
+cp ./ramdisk/* $SYSROOT/ramdisk/
+7z a $SYSROOT/ramdisk.tar $SYSROOT/ramdisk/*
