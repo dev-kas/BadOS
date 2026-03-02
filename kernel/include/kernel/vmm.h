@@ -6,6 +6,6 @@
 extern uint32_t page_directory[1024];
 
 void vmm_initialize();
-void vmm_map_page(uint32_t phys, uint32_t virt);
+void vmm_map_page(uint32_t phys, uint32_t virt, uint32_t flags);
 
 #endif

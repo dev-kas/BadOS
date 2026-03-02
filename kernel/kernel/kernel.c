@@ -79,7 +79,7 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 
 	for (uint32_t i = heap_start; i < heap_end; i += 4096) {
 		uint32_t phys = pmm_alloc_block();
-		vmm_map_page(phys, i);
+		vmm_map_page(phys, i, 3);
 	}
 
 	kheap_initialize((void*)heap_start, 256 * 4096);
@@ -91,6 +91,7 @@ void kernel_main(uint32_t magic, multiboot_info_t* mboot_ptr) {
 	void* hello_kex = fs_get_file("hello.kex", &file_size);
 
 	if (hello_kex) {
+		terminal_initialize(); // clear the screen
 		load_kex_and_run(hello_kex);
 	} else {
 		printf("Could not find hello.kex in ramdisk");

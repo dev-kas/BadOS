@@ -6,11 +6,15 @@ void abort(void) {
 #if defined(__is_libk)
 	// TODO: add proper kernel panic
 	printf("kernel: panic: abort()\n");
-	asm volatile("hlt");
+	asm volatile("cli; hlt");
 #else
-	// TODO: abnormally terminate process as if by SIGABRT
-	printf("panic()\n");
+	asm volatile(
+		"int $0x80"
+		:
+		: "a"(2), "b"(0), "c"(0), "d"(0)
+		: "memory"
+	);
 #endif
-	while (1) { };
+	while (1);
 	__builtin_unreachable();
 }

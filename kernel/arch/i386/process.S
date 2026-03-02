@@ -14,7 +14,7 @@ switch_to_user_mode:
 
 	# construct iret frame
 	pushl $0x23 # ss (user data)
-	pushl $0x3FFFF0 # esp (user stack)
+	pushl $0x800000 # esp (user stack)
 	pushf # eflags
 
 	popl %eax

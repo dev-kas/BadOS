@@ -11,7 +11,12 @@ int putchar(int ic) {
 	terminal_write(&c, sizeof(c));
 	serial_putchar(c);
 #else
-	// TODO: implement stdio and the write syscall
+	asm volatile(
+		"int $0x80"
+		:
+		: "a"(1), "b"(ic), "c"(0), "d"(0)
+		: "memory"
+	);
 #endif
 	return ic;
 }

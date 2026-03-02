@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <kernel/process.h>
+#include <kernel/tty.h>
+#include <kernel/serial.h>
 
 void syscall_handler(struct registers* regs) {
 	switch (regs->eax) {
-	case 1: // print string
-		printf((char*)regs->ebx);
+	case 1: // putchar
+		char c = (char)regs->ebx;
+		terminal_putchar(c);
+		serial_putchar(c);
 		break;
 	case 2: // exit / halt
 		printf("\nUser Process Exited.\n");

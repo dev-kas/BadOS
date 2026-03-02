@@ -4,12 +4,11 @@ KEXLD   := ~/kex/kex-ld
 
 BASE_CFLAGS := \
     -ffreestanding \
-    -fPIC \
     -fno-stack-protector \
     -mno-red-zone \
     -nostdlib
 
-BASE_LDFLAGS := -shared
+BASE_LDFLAGS := -static -nostdlib
 
 # discover program dirs
 PROGRAM_DIRS := $(patsubst %/,%,$(dir $(wildcard */make.config)))
@@ -36,7 +35,8 @@ $$(ELF_$(PROG)): $$(OBJ_$(PROG)) $(1)/userland.ld
 	    -T $(1)/userland.ld \
 	    $(BASE_LDFLAGS) \
 	    $$(LDFLAGS) \
-	    -o $$@ $$(OBJ_$(PROG)) $$(LIBS)
+	    -o $$@ $$(OBJ_$(PROG)) \
+	    -L$(SYSROOT)/usr/lib -lc $$(LIBS)
 
 # build KEX
 $$(KEX_$(PROG)): $$(ELF_$(PROG))
