@@ -41,3 +41,10 @@ void pic_remap(void) {
 	outb(PIC1_DATA, 0xFC);
 	outb(PIC2_DATA, 0xFF);
 }
+
+void pit_initialize(uint32_t frequency) {
+    uint32_t divisor = 1193180 / frequency;
+    outb(0x43, 0x36);
+    outb(0x40, (uint8_t)(divisor & 0xFF));
+    outb(0x40, (uint8_t)((divisor >> 8) & 0xFF));
+}

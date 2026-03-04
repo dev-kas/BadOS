@@ -27,9 +27,13 @@ static volatile struct limine_module_request module_request = { .id = LIMINE_MOD
 __attribute__((used, section(".requests")))
 static volatile struct limine_hhdm_request hhdm_request = { .id = LIMINE_HHDM_REQUEST, .revision = 0 };
 
+__attribute__((used, section(".requests")))
+volatile struct limine_framebuffer_request fb_request = { .id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0 };
+
 uint64_t hhdm_offset = 0;
 
 extern uint64_t _kernel_end;
+extern void pit_initialize(uint32_t frequency);
 
 __attribute__((section(".text")))
 void _start(void) {
@@ -95,19 +99,29 @@ void _start(void) {
 	}
 
 	kheap_initialize((void*)heap_start, 1024 * 1024);
+	pit_initialize(1000); // 1000Hz (1ms)
 	multitasking_initialize();
 
 	if (module_request.response && module_request.response->module_count > 0) {
 		fs_init((uint64_t)module_request.response->modules[0]->address);
 		
+		uint64_t vid_size;
+		void* vid_ptr = fs_get_file("video.bad", &vid_size);
+		if (vid_ptr) {
+			uint64_t vid_phys = (uint64_t)vid_ptr - hhdm_offset;
+			for(uint64_t off = 0; off < vid_size + 4095; off += 4096) {
+				vmm_map_page(vid_phys + off, 0x80000000 + off, 0x7);
+			}
+			printf("Mapped %d bytes of video.bad to 0x80000000\n", vid_size);
+		}
+
 		uint64_t file_size;
-		void* hello_kex = fs_get_file("hello.kex", &file_size);
+		void* hello_kex = fs_get_file("init.kex", &file_size);
 		
 		if (hello_kex) {
-			asm volatile("sti");
 			load_kex_and_run(hello_kex);
 		} else {
-			printf("Could not find hello.kex in ramdisk\n");
+			printf("Could not find init.kex\n");
 		}
 	}
 

@@ -7,6 +7,7 @@
 
 process_t* current_process = NULL;
 process_t* process_list = NULL;
+volatile uint64_t uptime_ms = 0;
 
 int next_pid = 1;
 
@@ -69,6 +70,7 @@ uint64_t schedule(uint64_t current_rsp) {
 }
 
 uint64_t irq0_handler(uint64_t rsp) {
+	uptime_ms++; // 1 tick = 1ms
 	outb(0x20, 0x20); // acknowledge interrupt to PIC
 	return schedule(rsp);
 }
