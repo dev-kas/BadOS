@@ -8,5 +8,5 @@ done
 
 rm -rf sysroot
 rm -rf isodir
-rm -rf meat.iso
+rm -rf bados.iso
 

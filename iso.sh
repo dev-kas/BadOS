@@ -4,14 +4,14 @@
 mkdir -p isodir
 mkdir -p isodir/boot
 
-cp sysroot/boot/meat.kernel isodir/boot/meat.kernel
+cp sysroot/boot/bados.kernel isodir/boot/bados.kernel
 cp sysroot/ramdisk.tar isodir/boot/ramdisk.tar
 
 cat > isodir/limine.cfg << EOF
 TIMEOUT=0
 :MeatOS
 PROTOCOL=limine
-KERNEL_PATH=boot:///boot/meat.kernel
+KERNEL_PATH=boot:///boot/bados.kernel
 MODULE_PATH=boot:///boot/ramdisk.tar
 EOF
 
@@ -24,7 +24,7 @@ xorriso -as mkisofs -b limine-bios-cd.bin \
 	-no-emul-boot -boot-load-size 4 -boot-info-table \
 	--efi-boot limine-uefi-cd.bin \
 	-efi-boot-part --efi-boot-image --protective-msdos-label \
-	isodir -o meat.iso
+	isodir -o bados.iso
 
-./limine/limine bios-install meat.iso
+./limine/limine bios-install bados.iso
 

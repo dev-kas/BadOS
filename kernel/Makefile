@@ -56,9 +56,9 @@ $(LIBS) \
 .PHONY: all clean install install-headers install-kernel
 .SUFFIXES: .o .c .s
 
-all: meat.kernel
+all: bados.kernel
 
-meat.kernel: $(OBJS) $(ARCHDIR)/linker.ld
+bados.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
@@ -71,7 +71,7 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 clean:
-	rm -rf meat.kernel
+	rm -rf bados.kernel
 	rm -rf $(OBJS) *.o */*.o */*/*.o
 	rm -rf $(OBJS:.o=.d) *.d */*.d */*/*.d
 
@@ -81,9 +81,9 @@ install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
-install-kernel: meat.kernel
+install-kernel: bados.kernel
 	mkdir -p $(DESTDIR)$(BOOTDIR)
-	cp meat.kernel $(DESTDIR)$(BOOTDIR)
+	cp bados.kernel $(DESTDIR)$(BOOTDIR)
 
 -include $(OBJS:.o=.d)
 

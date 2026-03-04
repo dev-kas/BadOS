@@ -1,6 +1,6 @@
 #ifndef _SYS_CDEFS_H
 #define _SYS_CDEFS_H 1
 
-#define __meat_libc 1
+#define __bados_libc 1
 
 #endif
