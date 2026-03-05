@@ -8,6 +8,7 @@ void abort(void) {
 	printf("kernel: panic: abort()\n");
 	asm volatile("cli; hlt");
 #else
+	printf("Userland Program Aborted.");
 	asm volatile(
 		"int $0x80"
 		:

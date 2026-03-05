@@ -82,50 +82,58 @@ class Converter {
   process(outputFileName = "BadApple.bad") {
     console.log(`Converting ${this.frames.length} frames into .bad format...`);
 
-    const header = Buffer.alloc(8);
-    header.write("BAD\0", 0, "ascii");
-    header.writeUInt16LE(this.width, 4);
-    header.writeUInt16LE(this.height, 6);
-
+    const headerSize = 12; // updated header size
     const pixelsPerFrame = this.width * this.height;
     const bytesPerFrame = Math.ceil(pixelsPerFrame / 8);
+    const totalSize = headerSize + this.frames.length * bytesPerFrame;
 
-    const payload = Buffer.alloc(this.frames.length * bytesPerFrame);
+    const buffer = Buffer.alloc(totalSize);
 
+    // magic
+    buffer.write("BAD\0", 0, "ascii");
+
+    // dimensions
+    buffer.writeUInt16LE(this.width, 4);
+    buffer.writeUInt16LE(this.height, 6);
+
+    // frame count
+    buffer.writeUInt32LE(this.frames.length, 8);
+
+    // frame data
+    let offset = headerSize;
     for (let f = 0; f < this.frames.length; f++) {
       const frameBuffer = this.frames[f];
-      const frameStartByte = f * bytesPerFrame;
 
       for (let i = 0; i < pixelsPerFrame; i++) {
         const x = i % this.width;
         const y = Math.floor(i / this.width);
 
-        const offset = (y * this.width + x) * 3;
-        const r = frameBuffer[offset];
-        const g = frameBuffer[offset + 1];
-        const b = frameBuffer[offset + 2];
+        const pixelOffset = (y * this.width + x) * 3;
+        const r = frameBuffer[pixelOffset];
+        const g = frameBuffer[pixelOffset + 1];
+        const b = frameBuffer[pixelOffset + 2];
 
         const brightness = (r + g + b) / 3;
         const isBright = brightness >= 128;
 
         if (isBright) {
-          const byteOffset = frameStartByte + Math.floor(i / 8);
+          const byteOffset = offset + Math.floor(i / 8);
           const bitOffset = i % 8;
-          payload[byteOffset] |= 1 << bitOffset;
+          buffer[byteOffset] |= 1 << bitOffset;
         }
       }
 
+      offset += bytesPerFrame;
       if (f % 100 === 0) console.log(`Processed frame ${f}...`);
     }
 
-    const finalBuffer = Buffer.concat([header, payload]);
-    fs.writeFileSync(outputFileName, finalBuffer);
+    fs.writeFileSync(outputFileName, buffer);
 
     console.log(`Success! ${outputFileName} created.`);
     console.log(
       `Original size: ~${Math.round((this.frames.length * this.width * this.height * 3) / 1024 / 1024)} MB`,
     );
-    console.log(`Converted size: ${Math.round(finalBuffer.length / 1024)} KB`);
+    console.log(`Converted size: ${Math.round(buffer.length / 1024)} KB`);
   }
 }
 

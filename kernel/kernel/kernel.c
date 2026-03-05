@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <limine.h>
 #include <stdio.h>
+#include <string.h>
 #include <kernel/tty.h>
 #include <kernel/serial.h>
 #include <kernel/gdt.h>
@@ -94,12 +95,12 @@ void _start(void) {
 	vmm_initialize();
 
 	uint64_t heap_start = 0xFFFF900000000000ULL;
-	for (uint64_t i = heap_start; i < heap_start + (1024 * 1024); i += 4096) {
+	for (uint64_t i = heap_start; i < heap_start + (64 * 1024 * 1024); i += 4096) {
 		vmm_map_page(pmm_alloc_block(), i, 3);
 	}
 
-	kheap_initialize((void*)heap_start, 1024 * 1024);
-	pit_initialize(1000); // 1000Hz (1ms)
+	kheap_initialize((void*)heap_start, 64 * 1024 * 1024);
+	pit_initialize(100); // 100Hz (10ms)
 	multitasking_initialize();
 
 	if (module_request.response && module_request.response->module_count > 0) {
@@ -107,12 +108,30 @@ void _start(void) {
 		
 		uint64_t vid_size;
 		void* vid_ptr = fs_get_file("video.bad", &vid_size);
+		
 		if (vid_ptr) {
-			uint64_t vid_phys = (uint64_t)vid_ptr - hhdm_offset;
-			for(uint64_t off = 0; off < vid_size + 4095; off += 4096) {
-				vmm_map_page(vid_phys + off, 0x80000000 + off, 0x7);
+			uint64_t pages_needed = (vid_size + 4095) / 4096;
+			
+			printf("Loading video: %d bytes (%d pages)...\n", vid_size, pages_needed);
+
+			for (uint64_t i = 0; i < pages_needed; i++) {
+				uint64_t phys_page = pmm_alloc_block();
+				uint8_t* kernel_ptr = (uint8_t*)(phys_page + hhdm_offset);
+				uint64_t copy_size = 4096;
+				if (i == pages_needed - 1) {
+					copy_size = vid_size % 4096;
+					if (copy_size == 0) copy_size = 4096;
+				}
+				
+				uint8_t* src_ptr = (uint8_t*)vid_ptr + (i * 4096);
+				memcpy(kernel_ptr, src_ptr, copy_size);
+				
+				vmm_map_page(phys_page, 0x80000000 + (i * 4096), 0x7);
 			}
-			printf("Mapped %d bytes of video.bad to 0x80000000\n", vid_size);
+			
+			printf("Video mapped successfully to 0x80000000\n");
+		} else {
+			printf("WARN: video.bad not found in ramdisk!\n");
 		}
 
 		uint64_t file_size;

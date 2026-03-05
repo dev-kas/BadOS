@@ -70,7 +70,7 @@ uint64_t schedule(uint64_t current_rsp) {
 }
 
 uint64_t irq0_handler(uint64_t rsp) {
-	uptime_ms++; // 1 tick = 1ms
+	uptime_ms += 10; // 1 tick = 10ms
 	outb(0x20, 0x20); // acknowledge interrupt to PIC
 	return schedule(rsp);
 }
