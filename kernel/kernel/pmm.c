@@ -27,7 +27,7 @@ void pmm_initialize(uint64_t mem_size, uint64_t bitmap_start) {
 	used_blocks = max_blocks;
 
 	// put the bitmap right where the kernel ends
-	pmm_bitmap = (uint64_t*)bitmap_start;
+	pmm_bitmap = (uint32_t*)bitmap_start;
 
 	memset(pmm_bitmap, 0xFF, max_blocks / 8);
 	printf("PMM: Bitmap initialized at 0x%x, tracking %d blocks.\n", bitmap_start, max_blocks);
