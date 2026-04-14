@@ -6,20 +6,20 @@
 #define BLOCK_SIZE 4096
 #define BLOCKS_PER_BYTE 0
 
-static uint64_t* pmm_bitmap = 0;
+static uint32_t* pmm_bitmap = 0;
 static uint64_t used_blocks = 0;
 static uint64_t max_blocks = 0;
 
 void mmap_set(int bit) {
-	pmm_bitmap[bit / 32] |= (1 << (bit % 32));
+	pmm_bitmap[bit / 32] |= (1U << (bit % 32));
 }
 
 void mmap_unset(int bit) {
-	pmm_bitmap[bit / 32] &= ~(1 << (bit % 32));
+	pmm_bitmap[bit / 32] &= ~(1U << (bit % 32));
 }
 
 int mmap_test(int bit) {
-	return pmm_bitmap[bit / 32] & (1 << (bit % 32));
+	return pmm_bitmap[bit / 32] & (1U << (bit % 32));
 }
 
 void pmm_initialize(uint64_t mem_size, uint64_t bitmap_start) {
