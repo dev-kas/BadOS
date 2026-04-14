@@ -18,6 +18,7 @@ int serial_initialize(void) {
 	
 	// check if the serial is faulty (ie. not same byte as sent)
 	if (inb(PORT + 0) != 0xae) {
+		outb(PORT + 4, 0x0f); // restore normal mode
 		return 1;
 	}
 

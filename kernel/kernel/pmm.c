@@ -47,7 +47,7 @@ void pmm_init_region(uint64_t base, uint64_t size) {
 
 void pmm_deinit_region(uint64_t base, uint64_t size) {
 	int align = base / BLOCK_SIZE;
-	int blocks = size / BLOCK_SIZE;
+	int blocks = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
 	for (; blocks > 0; blocks--) {
 		mmap_set(align++);
