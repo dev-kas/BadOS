@@ -95,11 +95,11 @@ void _start(void) {
 	vmm_initialize();
 
 	uint64_t heap_start = 0xFFFF900000000000ULL;
-	for (uint64_t i = heap_start; i < heap_start + (64 * 1024 * 1024); i += 4096) {
+	for (uint64_t i = heap_start; i < heap_start + (16 * 1024 * 1024); i += 4096) {
 		vmm_map_page(pmm_alloc_block(), i, 3);
 	}
 
-	kheap_initialize((void*)heap_start, 64 * 1024 * 1024);
+	kheap_initialize((void*)heap_start, 16 * 1024 * 1024);
 	pit_initialize(100); // 100Hz (10ms)
 	multitasking_initialize();
 
