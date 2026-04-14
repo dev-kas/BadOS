@@ -18,8 +18,17 @@ void yield() {
 
 void _start() {
     uint8_t* file = (uint8_t*)0x80000000;
+    int found = 0;
     
-    if (file[0] != 'B' || file[1] != 'A' || file[2] != 'D') {
+    for (int i = 0; i < 4096; i++) {
+        if (file[i] == 'B' && file[i+1] == 'A' && file[i+2] == 'D' && file[i+3] == '\0') {
+            file = &file[i];
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
         printf("Error: Invalid or missing video.bad!\n");
         abort();
     }

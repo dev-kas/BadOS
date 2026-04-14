@@ -108,25 +108,17 @@ void _start(void) {
 		
 		uint64_t vid_size;
 		void* vid_ptr = fs_get_file("video.bad", &vid_size);
-		
+
 		if (vid_ptr) {
-			uint64_t pages_needed = (vid_size + 4095) / 4096;
+			uint64_t vid_phys = (uint64_t)vid_ptr - hhdm_offset;
+			uint64_t phys_aligned = vid_phys & ~0xFFF;
+			uint64_t offset = vid_phys & 0xFFF;
+			uint64_t pages_needed = (vid_size + offset + 4095) / 4096;
 			
-			printf("Loading video: %d bytes (%d pages)...\n", vid_size, pages_needed);
+			printf("Mapping video: %d bytes (%d pages)...\n", vid_size, pages_needed);
 
 			for (uint64_t i = 0; i < pages_needed; i++) {
-				uint64_t phys_page = pmm_alloc_block();
-				uint8_t* kernel_ptr = (uint8_t*)(phys_page + hhdm_offset);
-				uint64_t copy_size = 4096;
-				if (i == pages_needed - 1) {
-					copy_size = vid_size % 4096;
-					if (copy_size == 0) copy_size = 4096;
-				}
-				
-				uint8_t* src_ptr = (uint8_t*)vid_ptr + (i * 4096);
-				memcpy(kernel_ptr, src_ptr, copy_size);
-				
-				vmm_map_page(phys_page, 0x80000000 + (i * 4096), 0x7);
+				vmm_map_page(phys_aligned + (i * 4096), 0x80000000 + (i * 4096), 0x7);
 			}
 			
 			printf("Video mapped successfully to 0x80000000\n");
