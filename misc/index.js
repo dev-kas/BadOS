@@ -80,14 +80,50 @@ class Converter {
   }
 
   process(outputFileName = "BadApple.bad") {
-    console.log(`Converting ${this.frames.length} frames into .bad format...`);
+    console.log(
+      `Converting ${this.frames.length} frames into .bad format...`,
+    );
 
-    const headerSize = 12; // updated header size
     const pixelsPerFrame = this.width * this.height;
-    const bytesPerFrame = Math.ceil(pixelsPerFrame / 8);
-    const totalSize = headerSize + this.frames.length * bytesPerFrame;
+    const rleBuffer = Buffer.allocUnsafe(this.frames.length * pixelsPerFrame);
+    let rleIndex = 0;
 
-    const buffer = Buffer.alloc(totalSize);
+    let currentColor = -1;
+    let runLength = 0;
+
+    for (let f = 0; f < this.frames.length; f++) {
+      const frameBuffer = this.frames[f];
+
+      for (let i = 0; i < pixelsPerFrame; i++) {
+        const pixelOffset = i * 3;
+        const r = frameBuffer[pixelOffset];
+        const g = frameBuffer[pixelOffset + 1];
+        const b = frameBuffer[pixelOffset + 2];
+
+        const isBright = (r + g + b) / 3 >= 128 ? 1 : 0;
+
+        if (currentColor === -1) {
+          currentColor = isBright;
+          runLength = 1;
+        } else if (currentColor === isBright && runLength < 127) {
+          runLength++;
+        } else {
+          rleBuffer[rleIndex++] = (currentColor << 7) | runLength;
+          currentColor = isBright;
+          runLength = 1;
+        }
+      }
+
+      if (f % 100 === 0) console.log(`Processed frame ${f}...`);
+    }
+
+    if (runLength > 0) {
+      rleBuffer[rleIndex++] = (currentColor << 7) | runLength;
+    }
+
+    const headerSize = 12;
+    const finalSize = headerSize + rleIndex;
+    const buffer = Buffer.alloc(finalSize);
 
     // magic
     buffer.write("BAD\0", 0, "ascii");
@@ -99,41 +135,14 @@ class Converter {
     // frame count
     buffer.writeUInt32LE(this.frames.length, 8);
 
-    // frame data
-    let offset = headerSize;
-    for (let f = 0; f < this.frames.length; f++) {
-      const frameBuffer = this.frames[f];
-
-      for (let i = 0; i < pixelsPerFrame; i++) {
-        const x = i % this.width;
-        const y = Math.floor(i / this.width);
-
-        const pixelOffset = (y * this.width + x) * 3;
-        const r = frameBuffer[pixelOffset];
-        const g = frameBuffer[pixelOffset + 1];
-        const b = frameBuffer[pixelOffset + 2];
-
-        const brightness = (r + g + b) / 3;
-        const isBright = brightness >= 128;
-
-        if (isBright) {
-          const byteOffset = offset + Math.floor(i / 8);
-          const bitOffset = i % 8;
-          buffer[byteOffset] |= 1 << bitOffset;
-        }
-      }
-
-      offset += bytesPerFrame;
-      if (f % 100 === 0) console.log(`Processed frame ${f}...`);
-    }
+    rleBuffer.copy(buffer, headerSize, 0, rleIndex);
 
     fs.writeFileSync(outputFileName, buffer);
-
     console.log(`Success! ${outputFileName} created.`);
     console.log(
-      `Original size: ~${Math.round((this.frames.length * this.width * this.height * 3) / 1024 / 1024)} MB`,
+      `Original size: ~${Math.round((this.frames.length * pixelsPerFrame * 3) / 1024 / 1024)} MB`,
     );
-    console.log(`Converted size: ${Math.round(buffer.length / 1024)} KB`);
+    console.log(`Converted size: ${Math.round(finalSize / 1024)} KB`);
   }
 }
 
